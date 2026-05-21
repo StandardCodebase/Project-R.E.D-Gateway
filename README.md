@@ -2,7 +2,7 @@
 
 ## Sovereign Knowledge Node Engine
 
-Project R.E.D. rejects both centralized database monopolies and overly complex distributed consensus protocols. Instead, it systematically decouples the **Independent Data Layer** from the **Social Curation Layer**.
+Project R.E.D rejects both centralized database monopolies and overly complex distributed consensus protocols. Instead, it systematically decouples the **Independent Data Layer** from the **Social Curation Layer**.
 
 The engine operates as a stateless, high-performance Go runtime that compiles raw Markdown files into visually polarized technical templates, dynamically injecting cryptographic integrity signatures on every request loop.
 
@@ -163,8 +163,6 @@ docker run -d \
 ## 6. Simulating Knowledge Base Structures
 
 Rather than enforcing a brittle, top-down linear hierarchy that breaks under dependency hell, R.E.D. leverages your computer's native filesystem directory tracking. Group, version, and fork your files within folders inside your local storage volume dynamically:
-
-Plaintext
 
 ```
 data/
