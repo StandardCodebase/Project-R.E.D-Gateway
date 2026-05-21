@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>{{ .Title }} | Project R.E.D.</title>
+        <link rel="stylesheet" href="/static/style.css" />
+        <meta property="og:title" content="{{ .Title }}" />
+        <meta property="og:type" content="article" />
+        <meta
+            property="og:description"
+            content="Decentralized Knowledge Node: {{ .NodeName }}"
+        />
+        <meta property="og:meta_hash" content="{{ .ContentHash }}" />
+    </head>
+    <body>
+        <header class="node-header">
+            <div class="header-container">
+                <div class="brand">
+                    <h1>Project R.E.D.</h1>
+                    <span class="node-badge">Node: {{ .NodeName }}</span>
+                </div>
+                <button
+                    id="theme-toggle"
+                    aria-label="Toggle Polarized Theme"
+                    class="toggle-btn"
+                >
+                    <span class="icon-polarized"></span>
+                </button>
+            </div>
+        </header>
+
+        <main class="node-container">
+            <section class="metadata-ribbon">
+                <div class="meta-item">
+                    <span class="label">AUTHOR:</span>
+                    <span class="value identity">{{ .AuthorIdentity }}</span>
+                </div>
+                <div class="meta-item">
+                    <span class="label">CREATED:</span>
+                    <span class="value">{{ .CreatedAt }}</span>
+                </div>
+                <div class="meta-item">
+                    <span class="label">SHA-256:</span>
+                    <span class="value hash">{{ .ContentHash }}</span>
+                </div>
+            </section>
+
+            <hr class="divider" />
+
+            <article class="markdown-body">{{ .HTMLContent }}</article>
+
+            <hr class="divider" />
+
+            {{ if .DiscussionHub }}
+            <footer class="curation-footer">
+                <p>
+                    Verification & Peer Review occur within the social curation
+                    layer.
+                </p>
+                <a
+                    href="{{ .DiscussionHub }}"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="action-button"
+                >
+                    Review or Discuss this Guide on Public Hub
+                </a>
+            </footer>
+            {{ end }}
+        </main>
+
+        <script>
+            const toggleBtn = document.getElementById("theme-toggle");
+            const html = document.documentElement;
+
+            // Check local storage or default to dark
+            const savedTheme = localStorage.getItem("red-theme") || "dark";
+            html.setAttribute("data-theme", savedTheme);
+
+            toggleBtn.addEventListener("click", () => {
+                const currentTheme = html.getAttribute("data-theme");
+                const newTheme = currentTheme === "dark" ? "light" : "dark";
+
+                html.setAttribute("data-theme", newTheme);
+                localStorage.setItem("red-theme", newTheme);
+            });
+        </script>
+    </body>
+</html>
