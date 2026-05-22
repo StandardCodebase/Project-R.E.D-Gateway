@@ -60,6 +60,7 @@ services:
     container_name: tor_sidecar
     restart: unless-stopped
     networks:
+      - clearnet-tier
       - onion-tier
     links:
       - red_dark_node
@@ -69,7 +70,6 @@ services:
       - ./tor_keys:/var/lib/tor
     depends_on:
       - red_dark_node
-
 volumes:
   caddy_data:
   caddy_config:
