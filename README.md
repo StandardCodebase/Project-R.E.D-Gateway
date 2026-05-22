@@ -29,9 +29,9 @@ Project R.E.D. systematically dismantles the architectural vulnerabilities inher
 - **Replacing the "Jury" with Cryptographic Trust:** B.L.U.E. unrealistically expects specialized professionals to donate countless hours to an uncompensated moderation jury. R.E.D. decouples moderation from the engine, replacing centralized voting with a decentralized Web-of-Trust where users rely on cryptographic signatures (PGP/Nostr) from trusted peers.
 
 - **Bypassing Dependency Hell:** B.L.U.E. enforces a rigid, linear learning hierarchy where a single obsolete foundational guide can collapse the entire structure. R.E.D. prevents this by leveraging native filesystem directories and dynamic versioning, allowing knowledge to adapt organically without cascading failures.
-- 
+
 - **Resolving the "Spin-Off" Paradox:** B.L.U.E. mandates one definitive guide per topic, yet paradoxically suggests forking contested guides during disputes, guaranteeing a cluttered, redundant database. R.E.D. removes moderation logic from the runtime entirely; the end-user's local client seamlessly curates the best version based purely on trusted cryptographic networks.
-- 
+
 ## 3. Architecture: The Dual-Tier Deployment
 
 Project R.E.D operates via a highly secure, dual-tier Docker network topology. It separates public "Clearnet" knowledge from restricted "Darknet" knowledge using strict Docker network isolation.
