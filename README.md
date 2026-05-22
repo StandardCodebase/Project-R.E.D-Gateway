@@ -20,17 +20,18 @@ While noble in its intent to provide universal free education, the BLUE System s
 
 ## 2. How R.E.D Fixes B.L.U.E
 
+
 Project R.E.D. systematically dismantles the architectural vulnerabilities inherent in centralized knowledge repositories.
 
-- **Eradicating the Single Point of Failure:** B.L.U.E. relies on a master domain, creating a massive target for corporate lawfare and global de-indexing. R.E.D. operates on a stateless, dual-tier Docker network topology (Clearnet/Tor) , eliminating the centralized attack vector entirely.
+- **Eradicating the Single Point of Failure:** B.L.U.E. relies on a master domain, creating a massive target for corporate lawfare and global de-indexing. R.E.D. operates on a stateless, dual-tier Docker network topology (Clearnet/Tor), eliminating the centralized attack vector entirely.
 
 - **Eliminating Financial Conflicts:** B.L.U.E.'s reliance on contextual advertising fundamentally destroys its neutrality by financially incentivizing the use of expensive corporate materials. R.E.D. requires zero centralized funding, ensuring information remains free from commercial manipulation and review-bombing bots.
 
-- **Replacing the "Jury" with Cryptographic Trust:** B.L.U.E. unrealistically expects specialized professionals to donate countless hours to an uncompensated moderation jury. R.E.D. decouples moderation from the engine, replacing centralized voting with a decentralized Web-of-Trust where users rely on cryptographic signatures (PGP/Nostr) from trusted peers.
+- **Outsourcing the Verifier System:** B.L.U.E. expects specialized professionals to donate countless hours to an internal, uncompensated moderation jury. R.E.D. outsources the voting and review of guides to highly capable, already-existing social platforms like Reddit and Discord. By tapping into established, free networks, it leverages active communities to organically filter content and create a more robust, unbiased verifier system.
 
 - **Bypassing Dependency Hell:** B.L.U.E. enforces a rigid, linear learning hierarchy where a single obsolete foundational guide can collapse the entire structure. R.E.D. prevents this by leveraging native filesystem directories and dynamic versioning, allowing knowledge to adapt organically without cascading failures.
 
-- **Resolving the "Spin-Off" Paradox:** B.L.U.E. mandates one definitive guide per topic, yet paradoxically suggests forking contested guides during disputes, guaranteeing a cluttered, redundant database. R.E.D. removes moderation logic from the runtime entirely; the end-user's local client seamlessly curates the best version based purely on trusted cryptographic networks.
+- **Resolving the "Spin-Off" Paradox:** B.L.U.E. mandates one definitive guide per topic, yet paradoxically suggests forking contested guides during disputes, guaranteeing a cluttered, redundant database. R.E.D. removes moderation logic from the runtime entirely; the end-user's local client seamlessly curates the best version based on established network consensus.
 
 ## 3. Architecture: The Dual-Tier Deployment
 
