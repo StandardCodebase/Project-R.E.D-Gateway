@@ -209,3 +209,12 @@ body {
     background-color: var(--accent-hover);
     cursor: pointer;
 }
+
+.download-link {
+    color: var(--border-color);
+    text-decoration: none;
+    font-family: monospace;
+}
+.download-link:hover {
+    text-decoration: underline;
+}
