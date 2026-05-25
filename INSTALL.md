@@ -78,12 +78,12 @@ The repository includes a `docker-compose.yml` that launches two independent nod
    docker-compose logs -f
    ```
 
-6. The clearnet node will be available at `http://localhost` (or your domain).  
+6. The clearnet node will be available at `http://localhost/guides/index` (or your domain).  
    The darknet node’s `.onion` address appears in the Tor container logs:
    ```bash
    docker logs tor_sidecar
    ```
-
+7. Test the installation by running: `http://localhost/guides/index`.
 ---
 
 ## Writing Guide Metadata (YAML Frontmatter)
