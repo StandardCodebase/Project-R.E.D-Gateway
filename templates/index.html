@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Project R.E.D.</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Linux+Libertine+O&family=Linux+Biolinum+O&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<div id="p-personal">
+  <span>Node: <strong>{{ .NodeName }}</strong></span>
+  <a href="/">Main page</a>
+</div>
+<div id="mw-head">
+  <a id="p-logo" href="/">
+    <svg viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="30" cy="30" r="28" stroke="currentColor" stroke-width="1.5"/>
+      <ellipse cx="30" cy="30" rx="14" ry="28" stroke="currentColor" stroke-width="1.5"/>
+      <ellipse cx="30" cy="30" rx="28" ry="10" stroke="currentColor" stroke-width="1.5"/>
+      <line x1="2" y1="30" x2="58" y2="30" stroke="currentColor" stroke-width="1.5"/>
+      <line x1="30" y1="2" x2="30" y2="58" stroke="currentColor" stroke-width="1.5"/>
+    </svg>
+    <div id="p-logo-text">R.E.D.<small>Knowledge Base</small></div>
+  </a>
+  <nav id="p-navigation">
+    <a href="/" class="active">Main page</a>
+    <a href="/">All guides</a>
+    <a href="/health">Node health</a>
+  </nav>
+</div>
+<div id="content-wrapper">
+  <div id="mw-panel">
+    <div class="portal">
+      <h3>Navigation</h3>
+      <ul>
+        <li><a href="/">Main page</a></li>
+        <li><a href="/">All guides</a></li>
+      </ul>
+    </div>
+  </div>
+  <div id="mw-content-text-wrapper">
+    <h1 id="firstHeading">Main Page</h1>
+    <div id="bodyContent">
+      <p style="color:#54595d;font-size:13px;font-family:sans-serif;margin-bottom:14px">
+        Welcome to <strong>Project R.E.D.</strong> — node <em>{{ .NodeName }}</em>. {{ len .Guides }} guides available.
+      </p>
+      {{ if .Guides }}
+      <ul class="guide-list">
+        {{ range .Guides }}<li><a href="/guides/{{ .Path }}">{{ .Title }}</a></li>{{ end }}
+      </ul>
+      {{ else }}
+      <p>No guides found in the data directory.</p>
+      {{ end }}
+    </div>
+    <div id="footer">
+      <span>Project R.E.D. — Resilient Encrypted Distribution</span>
+      <span>Node: {{ .NodeName }}</span>
+    </div>
+  </div>
+</div>
+</body>
+</html>

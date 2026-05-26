@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{{ .FileName }} - Source · R.E.D.</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<header>
+  <a href="/guides/{{ .ContentPath }}" class="brand">Back</a>
+  <span class="node">{{ .NodeName }}</span>
+  <span>{{ .FileName }} · {{ .LineCount }} lines · {{ .ByteCount }} bytes</span>
+  <a href="/download/{{ .ContentPath }}" download>Download</a>
+  <button onclick="navigator.clipboard.writeText(document.getElementById('raw').value).then(()=>this.textContent='Copied!',setTimeout(()=>this.textContent='Copy',2000))">Copy</button>
+</header>
+<main>
+<table class="src">
+<tbody>
+{{- range $i, $line := .Lines -}}
+<tr><td class="ln" id="L{{add1 $i}}"><a href="#L{{add1 $i}}">{{add1 $i}}</a></td><td class="lc">{{$line}}</td></tr>
+{{- end -}}
+</tbody>
+</table>
+</main>
+<textarea id="raw" style="position:absolute;left:-9999px">{{ range .Lines }}{{ . }}
+{{ end }}</textarea>
+<script>
+  window.addEventListener("hashchange",hl);document.addEventListener("DOMContentLoaded",hl);
+  function hl(){document.querySelectorAll("tr.hi").forEach(r=>r.classList.remove("hi"));const h=location.hash;if(!h)return;const td=document.querySelector(h);if(td){td.closest("tr").classList.add("hi");td.scrollIntoView({block:"center"});}}
+</script>
+</body>
+</html>

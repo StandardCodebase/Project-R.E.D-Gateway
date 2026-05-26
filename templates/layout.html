@@ -1,306 +1,121 @@
 <!doctype html>
-<html lang="en" data-theme="dark">
-    <head>
-        <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>{{ .Title }} | Project R.E.D</title>
-        <link rel="stylesheet" href="/static/style.css?v=3" />
-        <meta property="og:title" content="{{ .Title }}" />
-        <meta property="og:type" content="article" />
-        <meta
-            property="og:description"
-            content="Decentralized Knowledge Node: {{ .NodeName }}"
-        />
-        <meta property="og:meta_hash" content="{{ .ContentHash }}" />
-    </head>
-    <body>
-        <div id="side-panel-overlay" class="side-panel-overlay"></div>
-        <aside id="side-panel" class="side-panel">
-            <div
-                style="
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                    margin-bottom: 2rem;
-                "
-            >
-                <h3 style="font-size: 1rem; color: var(--text-secondary)">
-                    AVAILABLE GUIDES
-                </h3>
-                <button
-                    id="close-panel"
-                    style="
-                        background: none;
-                        border: none;
-                        color: var(--text-primary);
-                        font-size: 1.5rem;
-                        cursor: pointer;
-                    "
-                >
-                    ✕
-                </button>
-            </div>
-            <div id="side-guide-list" class="side-guide-list"></div>
-        </aside>
-        <header class="node-header">
-            <div class="header-container">
-                <div style="display: flex; align-items: center; gap: 1rem">
-                    <button
-                        id="menu-toggle"
-                        aria-label="Open Guides Menu"
-                        style="
-                            background: transparent;
-                            border: none;
-                            color: var(--text-primary);
-                            font-size: 1.5rem;
-                            cursor: pointer;
-                            padding: 0;
-                        "
-                    >
-                        ☰
-                    </button>
-                    <div class="brand">
-                        <h1>Project R.E.D</h1>
-                        <span class="node-badge">Node: {{ .NodeName }}</span>
-                    </div>
-                </div>
-                <button
-                    id="theme-toggle"
-                    aria-label="Toggle Polarized Theme"
-                    class="toggle-btn"
-                >
-                    <span class="icon-polarized"></span>
-                </button>
-            </div>
-        </header>
-
-        <main class="node-container">
-            <section class="metadata-ribbon">
-                <div class="meta-item">
-                    <span class="label">AUTHORS:</span>
-                    <span class="value identity">
-                        {{- range $i, $author := .Authors -}} {{- if $i }}, {{
-                        end -}} {{- $author -}} {{- end -}}
-                    </span>
-                </div>
-
-                {{ if .Contributors }}
-                <div class="meta-item">
-                    <span class="label">CONTRIBUTORS:</span>
-                    <span class="value"
-                        >{{ range .Contributors }}{{ . }} {{ end }}</span
-                    >
-                </div>
-                {{ end }}
-
-                <div class="meta-item">
-                    <span class="label">CREATED:</span>
-                    <span class="value">{{ .CreatedAt }}</span>
-                </div>
-
-                {{ if .UpdatedAt }}
-                <div class="meta-item">
-                    <span class="label">UPDATED:</span>
-                    <span class="value">{{ .UpdatedAt }}</span>
-                </div>
-                <div class="meta-item">
-                    <span class="label">LAST EDITOR:</span>
-                    <span class="value identity">{{ .LastEditor }}</span>
-                </div>
-                {{ end }}
-
-                <div class="meta-item">
-                    <span class="label">SHA-256:</span>
-                    <span class="value hash">{{ .ContentHash }}</span>
-                </div>
-
-                <div class="meta-item">
-                    <span class="label">DOWNLOAD:</span>
-                    <a
-                        href="/download/{{ .ContentPath }}"
-                        class="download-link"
-                        download
-                        >📄 Markdown Source</a
-                    >
-                </div>
-            </section>
-
-            <hr class="divider" />
-
-            <article class="markdown-body">{{ .HTMLContent }}</article>
-
-            <hr class="divider" />
-
-            {{ if .DiscussionHub }}
-            <footer class="curation-footer">
-                <p>
-                    Verification & Peer Review occur within the social curation
-                    layer.
-                </p>
-                <a
-                    href="{{ .DiscussionHub }}"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    class="action-button"
-                >
-                    Review or Discuss this Guide on Public Hub
-                </a>
-            </footer>
-            {{ end }}
-        </main>
-
-        <script>
-            const toggleBtn = document.getElementById("theme-toggle");
-            const html = document.documentElement;
-
-            const savedTheme = localStorage.getItem("red-theme") || "dark";
-            html.setAttribute("data-theme", savedTheme);
-
-            toggleBtn.addEventListener("click", () => {
-                const currentTheme = html.getAttribute("data-theme");
-                const newTheme = currentTheme === "dark" ? "light" : "dark";
-                html.setAttribute("data-theme", newTheme);
-                localStorage.setItem("red-theme", newTheme);
-            });
-            // Side Panel Logic
-            const panel = document.getElementById("side-panel");
-            const overlay = document.getElementById("side-panel-overlay");
-            const menuBtn = document.getElementById("menu-toggle");
-            const closeBtn = document.getElementById("close-panel");
-            const guideList = document.getElementById("side-guide-list");
-
-            async function loadGuidesForPanel() {
-                guideList.innerHTML =
-                    '<span style="color: var(--text-secondary)">Scanning files...</span>';
-                try {
-                    const res = await fetch("/manifest");
-                    const data = await res.json();
-
-                    if (Object.keys(data).length === 0) {
-                        guideList.innerHTML =
-                            '<span style="color: var(--text-secondary)">No guides found in data directory.</span>';
-                        return;
-                    }
-
-                    // 1. Build a deep, recursive tree structure
-                    const root = { _files: [], _folders: {} };
-
-                    for (const [path, info] of Object.entries(data)) {
-                        const parts = path.split("/");
-                        const fileName = parts.pop(); // Pop off the markdown file itself
-
-                        let currentLevel = root;
-
-                        // Traverse the path and build subfolders if they don't exist yet
-                        for (const folder of parts) {
-                            if (!currentLevel._folders[folder]) {
-                                currentLevel._folders[folder] = {
-                                    _files: [],
-                                    _folders: {},
-                                };
-                            }
-                            currentLevel = currentLevel._folders[folder];
-                        }
-
-                        // Place the file strictly inside its exact nested folder
-                        currentLevel._files.push({
-                            path: path,
-                            title: info.title,
-                        });
-                    }
-
-                    // 2. Recursive function to generate the nested HTML layout
-                    function buildHtmlTree(node, isRoot = true) {
-                        let html = "";
-
-                        // Catch any "General" files that sit at the absolute root of the directory
-                        if (isRoot && node._files.length > 0) {
-                            for (const file of node._files) {
-                                html += `<a href="/guides/${file.path}" class="panel-link">📄 ${file.title}</a>`;
-                            }
-                        }
-
-                        // Loop through all folders at this current level
-                        for (const [folderName, childNode] of Object.entries(
-                            node._folders,
-                        )) {
-                            // If it's a subfolder, remove the outer border so we don't get ugly "boxes inside boxes"
-                            const folderStyle = isRoot
-                                ? ""
-                                : "border: none; margin-bottom: 0; margin-left: 0.5rem; border-left: 1px dashed rgba(56, 189, 248, 0.2); border-radius: 0;";
-
-                            html += `
-                                            <div class="panel-folder" style="${folderStyle}">
-                                                <div class="panel-folder-header" onclick="toggleFolderBox(this)">
-                                                    <span class="folder-icon"></span> <span style="text-transform: uppercase; font-weight: bold; font-size: 0.8rem;">${folderName}</span>
-                                                </div>
-                                                <div class="panel-folder-content">
-                                        `;
-
-                            // Re-run the function continuously for infinite levels of subfolders
-                            html += buildHtmlTree(childNode, false);
-
-                            html += `</div></div>`;
-                        }
-
-                        // Append the files that belong inside this specific subfolder
-                        if (!isRoot) {
-                            for (const file of node._files) {
-                                html += `<a href="/guides/${file.path}" class="panel-link"> ${file.title}</a>`;
-                            }
-                        }
-
-                        return html;
-                    }
-
-                    // 3. Inject the final recursive HTML into the sidebar
-                    guideList.innerHTML = buildHtmlTree(root, true);
-                } catch (e) {
-                    guideList.innerHTML =
-                        '<span style="color: var(--accent-color)">Failed to fetch manifest.</span>';
-                    console.error(e);
-                }
-            }
-
-            // Function to handle the collapse/expand animation
-            // Function to handle the collapse/expand animation
-            function toggleFolderBox(headerElement) {
-                // Add this line to track the rotation state of the specific header clicked
-                headerElement.classList.toggle("active");
-
-                const contentBox = headerElement.nextElementSibling;
-                contentBox.classList.toggle("open");
-            }
-
-            function togglePanel() {
-                const isOpen = panel.classList.toggle("open");
-                overlay.classList.toggle("open");
-                if (isOpen) loadGuidesForPanel();
-            }
-
-            menuBtn.addEventListener("click", togglePanel);
-            closeBtn.addEventListener("click", togglePanel);
-            overlay.addEventListener("click", togglePanel);
-        </script>
-
-        <script>
-            // Automatically convert markdown code blocks into clean Mermaid containers
-            document.addEventListener("DOMContentLoaded", function () {
-                document
-                    .querySelectorAll("pre code.language-mermaid")
-                    .forEach((el) => {
-                        const pre = el.parentElement;
-                        const div = document.createElement("div");
-                        div.className = "mermaid";
-                        div.textContent = el.textContent;
-                        pre.replaceWith(div);
-                    });
-            });
-        </script>
-
-        <script type="module">
-            import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs";
-            mermaid.initialize({ startOnLoad: true, theme: "dark" });
-        </script>
-    </body>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{{ .Title }} - Project R.E.D.</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Linux+Libertine+O&family=Linux+Biolinum+O&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<div id="p-personal">
+  <span>Node: <strong>{{ .NodeName }}</strong></span>
+  <a href="/">Main page</a>
+  <a href="/source/{{ .ContentPath }}">View source</a>
+  {{ if .DiscussionHub }}<a href="{{ .DiscussionHub }}" target="_blank">Discussion</a>{{ end }}
+</div>
+<div id="mw-head">
+  <a id="p-logo" href="/">
+    <svg viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="30" cy="30" r="28" stroke="currentColor" stroke-width="1.5"/>
+      <ellipse cx="30" cy="30" rx="14" ry="28" stroke="currentColor" stroke-width="1.5"/>
+      <ellipse cx="30" cy="30" rx="28" ry="10" stroke="currentColor" stroke-width="1.5"/>
+      <line x1="2" y1="30" x2="58" y2="30" stroke="currentColor" stroke-width="1.5"/>
+      <line x1="30" y1="2" x2="30" y2="58" stroke="currentColor" stroke-width="1.5"/>
+    </svg>
+    <div id="p-logo-text">R.E.D.<small>Knowledge Base</small></div>
+  </a>
+  <nav id="p-navigation">
+    <a href="/" class="active">Main page</a>
+    <a href="/">All guides</a>
+    <a href="/health">Node health</a>
+  </nav>
+  <div id="p-views">
+    <a href="/guides/{{ .ContentPath }}" class="selected">Article</a>
+    <a href="/source/{{ .ContentPath }}">View source</a>
+    {{ if .DiscussionHub }}<a href="{{ .DiscussionHub }}" target="_blank">Discussion</a>{{ end }}
+  </div>
+</div>
+<div id="content-wrapper">
+  <div id="mw-panel">
+    <div class="portal">
+      <h3>Navigation</h3>
+      <ul>
+        <li><a href="/">Main page</a></li>
+        <li><a href="/">All guides</a></li>
+        <li><a href="/health">Node health</a></li>
+      </ul>
+    </div>
+    <div class="portal">
+      <h3>Contents</h3>
+      <ul id="toc-sidebar"></ul>
+    </div>
+    <div class="portal">
+      <h3>Tools</h3>
+      <ul>
+        <li><a href="/source/{{ .ContentPath }}">View source</a></li>
+        <li><a href="/download/{{ .ContentPath }}" download>Download</a></li>
+        {{ if .DiscussionHub }}<li><a href="{{ .DiscussionHub }}" target="_blank">Discuss</a></li>{{ end }}
+      </ul>
+    </div>
+  </div>
+  <div id="mw-content-text-wrapper">
+    <h1 id="firstHeading">{{ .Title }}</h1>
+    <div class="hatnote">Content hash: <code>{{ .ContentHash }}</code>{{ if .UpdatedAt }} &middot; Last edited <strong>{{ .UpdatedAt }}</strong> by <em>{{ .LastEditor }}</em>{{ end }}</div>
+    <div id="bodyContent">
+      <table class="infobox">
+        <caption>Guide metadata</caption>
+        <tbody>
+          <tr><th>Authors</th><td>{{ range $i,$a := .Authors }}{{ if $i }}, {{ end }}{{ $a }}{{ end }}</td></tr>
+          {{ if .Contributors }}<tr><th>Contributors</th><td>{{ range .Contributors }}{{ . }} {{ end }}</td></tr>{{ end }}
+          <tr><th>Created</th><td>{{ .CreatedAt }}</td></tr>
+          {{ if .UpdatedAt }}<tr><th>Updated</th><td>{{ .UpdatedAt }}</td></tr>{{ end }}
+          <tr><th>Node</th><td>{{ .NodeName }}</td></tr>
+        </tbody>
+      </table>
+      <div id="toc">
+        <div class="toctitle">Contents <button class="toctoggle" id="toc-toggle">[hide]</button></div>
+        <ol id="toc-list"></ol>
+      </div>
+      <article id="body">{{ .HTMLContent }}</article>
+    </div>
+    <div id="footer">
+      <span>Retrieved from <strong>Project R.E.D.</strong> node <em>{{ .NodeName }}</em></span>
+      <span>SHA-256: <code>{{ .ContentHash }}</code></span>
+    </div>
+  </div>
+</div>
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  var hs = document.querySelectorAll("#body h2,#body h3"), tl="", sl="", c={h2:0,h3:0};
+  hs.forEach(function(h,i) {
+    h.id = "s"+i;
+    var edit = '<span class="mw-editsection">[<a href="/source/{{ .ContentPath }}">edit</a>]</span>';
+    h.innerHTML = h.innerHTML + edit;
+    if(h.tagName==="H2"){
+      c.h2++;c.h3=0;
+      tl+='<li><a href="#s'+i+'"><span>'+c.h2+'</span> '+h.childNodes[0].textContent.trim()+'</a><ol id="toc-sub-'+i+'"></ol></li>';
+      sl+='<li><a href="#s'+i+'">'+h.childNodes[0].textContent.trim()+'</a></li>';
+    } else {
+      c.h3++;
+      tl+='<li><a href="#s'+i+'"><span>'+c.h2+'.'+c.h3+'</span> '+h.childNodes[0].textContent.trim()+'</a></li>';
+    }
+  });
+  document.getElementById("toc-list").innerHTML = tl||"<li><em>No sections</em></li>";
+  document.getElementById("toc-sidebar").innerHTML = sl||"<li><em>No sections</em></li>";
+  document.getElementById("toc-toggle").onclick = function(){
+    var l=document.getElementById("toc-list"), h=l.style.display==="none";
+    l.style.display=h?"":"none"; this.textContent=h?"[hide]":"[show]";
+  };
+  document.querySelectorAll("pre code.language-mermaid").forEach(function(el){
+    var d=document.createElement("div");d.className="mermaid";d.textContent=el.textContent;el.parentElement.replaceWith(d);
+  });
+});
+</script>
+<script type="module">
+  import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs";
+  mermaid.initialize({startOnLoad:true,theme:"neutral"});
+</script>
+</body>
 </html>
