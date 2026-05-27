@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{if .Title}}{{.Title}} – {{end}}{{.Site}}</title>
+  <link rel="stylesheet" href="/static/reset.css">
+  <link rel="stylesheet" href="/static/layout.css">
+  <link rel="stylesheet" href="/static/nav.css">
+  <link rel="stylesheet" href="/static/article.css">
+</head>
+<body>
+
+  <header id="topbar">
+    <a id="wordmark" href="/">{{.Site}}</a>
+  </header>
+
+  <div id="wrap">
+
+    <nav id="sidebar">
+      <div class="nav-heading">Topics</div>
+      {{range $k, $s := .Nav}}
+        <a class="nav-item{{if eq $.TopCat $k}} active{{end}}" href="/{{$k}}">{{$s.Name}}</a>
+      {{end}}
+    </nav>
+
+    <main id="main">
+      {{if .Crumb}}
+        <nav class="breadcrumb">
+          <a href="/">{{.Site}}</a>
+          {{range .Crumb}}
+            <span class="sep">›</span>
+            <a href="{{.Path}}">{{.Label}}</a>
+          {{end}}
+        </nav>
+      {{end}}
+      <article class="article">
+        {{.Body}}
+      </article>
+    </main>
+
+  </div>
+
+</body>
+</html>

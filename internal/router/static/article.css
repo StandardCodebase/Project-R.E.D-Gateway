@@ -1,0 +1,183 @@
+/* ── Article shell ── */
+
+.article {
+  font-size: 0.94em;
+  line-height: 1.7;
+}
+
+
+/* ── Headings ── */
+
+.article h1 {
+  font-family: Georgia, "Linux Libertine", serif;
+  font-size: 2em;
+  font-weight: normal;
+  border-bottom: 1px solid #eaecf0;
+  padding-bottom: 5px;
+  margin-bottom: 18px;
+  color: #202122;
+  line-height: 1.25;
+}
+
+.article h2 {
+  font-family: Georgia, "Linux Libertine", serif;
+  font-size: 1.45em;
+  font-weight: normal;
+  border-bottom: 1px solid #eaecf0;
+  margin: 30px 0 10px;
+  padding-bottom: 3px;
+  color: #202122;
+}
+
+.article h3 {
+  font-size: 1.1em;
+  font-weight: bold;
+  margin: 20px 0 6px;
+  color: #202122;
+}
+
+.article h4 {
+  font-size: 0.95em;
+  font-weight: bold;
+  margin: 14px 0 4px;
+  color: #54595d;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+
+/* ── Body text ── */
+
+.article p {
+  margin: 0.4em 0 0.9em;
+}
+
+.article ul,
+.article ol {
+  margin: 0.4em 0 0.9em 1.6em;
+}
+
+.article li {
+  margin: 4px 0;
+}
+
+.article strong {
+  font-weight: 600;
+}
+
+.article em {
+  font-style: italic;
+}
+
+.article hr {
+  border: none;
+  border-top: 1px solid #eaecf0;
+  margin: 24px 0;
+}
+
+
+/* ── Blockquote ── */
+
+.article blockquote {
+  border-left: 3px solid #a2a9b1;
+  margin: 14px 0 14px 18px;
+  padding: 6px 14px;
+  color: #54595d;
+  font-style: italic;
+}
+
+
+/* ── Code ── */
+
+.article code {
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+}
+
+.article pre {
+  background: #f8f9fa;
+  border: 1px solid #eaecf0;
+  border-radius: 3px;
+  padding: 14px 16px;
+  overflow-x: auto;
+  margin: 12px 0;
+  font-size: 0.85em;
+  line-height: 1.55;
+}
+
+/* inline code */
+.article p code,
+.article li code,
+.article td code,
+.article th code {
+  background: #f8f9fa;
+  border: 1px solid #eaecf0;
+  border-radius: 2px;
+  padding: 1px 4px;
+  font-size: 0.88em;
+}
+
+
+/* ── Tables ── */
+
+.article table {
+  border-collapse: collapse;
+  margin: 14px 0;
+  font-size: 0.92em;
+  width: auto;
+}
+
+.article th {
+  background: #eaecf0;
+  border: 1px solid #a2a9b1;
+  padding: 7px 12px;
+  font-weight: 600;
+  text-align: left;
+}
+
+.article td {
+  border: 1px solid #a2a9b1;
+  padding: 6px 12px;
+  vertical-align: top;
+}
+
+.article tr:nth-child(even) td {
+  background: #f8f9fa;
+}
+
+
+/* ── Section index (category pages) ── */
+
+.section-index h1 {
+  font-family: Georgia, serif;
+  font-size: 2em;
+  font-weight: normal;
+  border-bottom: 1px solid #eaecf0;
+  padding-bottom: 5px;
+  margin-bottom: 20px;
+}
+
+.section-index h2 {
+  font-family: Georgia, serif;
+  font-size: 1.2em;
+  font-weight: normal;
+  color: #54595d;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 22px 0 8px;
+}
+
+.section-index ul {
+  list-style: none;
+  margin: 0 0 8px 0;
+  padding: 0;
+}
+
+.section-index li {
+  padding: 4px 0;
+  border-bottom: 1px solid #f0f0f0;
+  font-size: 0.94em;
+}
+
+.section-index li:last-child {
+  border-bottom: none;
+}

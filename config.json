@@ -1,0 +1,7 @@
+{
+  "source_url": "https://github.com/yourname/red-knowledge/archive/refs/heads/main.tar.gz",
+  "source_type": "tar.gz",
+  "data_dir": "./data",
+  "addr": ":8080",
+  "site_name": "RED"
+}
