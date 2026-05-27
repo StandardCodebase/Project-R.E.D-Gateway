@@ -16,3 +16,4 @@ caddy_data/
 caddy_config/
 caddy_routing/
 *.log
+red-engine*
