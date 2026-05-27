@@ -1,10 +1,14 @@
 .DS_Store
 Thumbs.db
 
-data/public/*
+data/clearnet/public/*
+data/clearnet/remote/*
 data/restricted/*
+data/
 
-!data/public/.gitkeep
+install.sh
+
+!data/clearnet/.gitkeep
 !data/restricted/.gitkeep
 
 tor_keys/

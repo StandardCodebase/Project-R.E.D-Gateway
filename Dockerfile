@@ -1,4 +1,4 @@
-# Stage 1: Build the optimized static binary
+# Stage 1: Build the application
 FROM golang:1.26-alpine AS builder
 WORKDIR /app
 COPY go.mod go.sum ./
@@ -9,12 +9,21 @@ RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o red-engine .
 # Stage 2: Construct the bare execution container
 FROM alpine:latest
 RUN apk --no-cache add ca-certificates
-WORKDIR /root/
+
+# Create a non-root user
+RUN addgroup -S redgroup && adduser -S reduser -G redgroup
+
+WORKDIR /app
 COPY --from=builder /app/red-engine .
 COPY --from=builder /app/templates ./templates
 COPY --from=builder /app/static ./static
 
-# Expose server port and bind state volumes
+# Ensure the user owns the directory
+RUN chown -R reduser:redgroup /app
+
+# Switch to the restricted user
+USER reduser
+
 EXPOSE 8080
-VOLUME ["/root/data"]
+VOLUME ["/app/data"]
 CMD ["./red-engine"]
