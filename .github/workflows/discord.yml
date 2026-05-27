@@ -1,0 +1,143 @@
+name: discord notification
+
+on:
+  push:
+  watch:
+    types: [started]
+  fork:
+  issues:
+    types: [opened, edited, closed, reopened]
+  pull_request:
+    types: [opened, closed, reopened, synchronize]
+
+permissions:
+  contents: read
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
+
+      - name: send notification
+        run: |
+          EVENT="${{ github.event_name }}"
+          REPO="${{ github.repository }}"
+          ACTOR="${{ github.actor }}"
+          BRANCH="${{ github.ref_name }}"
+          REPO_URL="https://github.com/$REPO"
+          TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+          FIELDS="[]"
+          COLOR=7506394
+
+          if [ "$EVENT" = "push" ]; then
+            COMMIT_SHA="${{ github.event.head_commit.id }}"
+            COMMIT_MSG="${{ github.event.head_commit.message }}"
+            COMMIT_AUTHOR="${{ github.event.head_commit.author.name }}"
+            COMMIT_URL="${{ github.event.head_commit.url }}"
+            SHORT_SHA="${COMMIT_SHA:0:7}"
+            TITLE="push to $BRANCH"
+            DESC="[$SHORT_SHA]($COMMIT_URL) — $COMMIT_MSG"
+            URL="$REPO_URL/commits/$BRANCH"
+            COLOR=3447003
+            FIELDS=$(jq -n \
+              --arg branch "$BRANCH" \
+              --arg actor "$ACTOR" \
+              --arg author "$COMMIT_AUTHOR" \
+              '[
+                {"name":"branch",  "value":$branch, "inline":true},
+                {"name":"pusher",  "value":$actor,  "inline":true},
+                {"name":"author",  "value":$author, "inline":true}
+              ]')
+
+          elif [ "$EVENT" = "watch" ]; then
+            STARS="${{ github.event.repository.stargazers_count }}"
+            TITLE="new star"
+            DESC="[$ACTOR](https://github.com/$ACTOR) starred [$REPO]($REPO_URL)"
+            URL="$REPO_URL/stargazers"
+            COLOR=16776960
+            FIELDS=$(jq -n \
+              --arg stars "$STARS" \
+              '[{"name":"total stars", "value":$stars, "inline":true}]')
+
+          elif [ "$EVENT" = "fork" ]; then
+            FORKEE="${{ github.event.forkee.full_name }}"
+            FORKEE_URL="${{ github.event.forkee.html_url }}"
+            TITLE="new fork"
+            DESC="[$ACTOR](https://github.com/$ACTOR) forked to [$FORKEE]($FORKEE_URL)"
+            URL="$FORKEE_URL"
+            COLOR=5763719
+
+          elif [ "$EVENT" = "issues" ]; then
+            ACTION="${{ github.event.action }}"
+            ISSUE_NUM="${{ github.event.issue.number }}"
+            ISSUE_TITLE="${{ github.event.issue.title }}"
+            ISSUE_URL="${{ github.event.issue.html_url }}"
+            ISSUE_USER="${{ github.event.issue.user.login }}"
+            ISSUE_STATE="${{ github.event.issue.state }}"
+            TITLE="issue #$ISSUE_NUM $ACTION"
+            DESC="[$ISSUE_TITLE]($ISSUE_URL)"
+            URL="$ISSUE_URL"
+            COLOR=15548997
+            FIELDS=$(jq -n \
+              --arg user "$ISSUE_USER" \
+              --arg state "$ISSUE_STATE" \
+              '[
+                {"name":"opened by", "value":$user,  "inline":true},
+                {"name":"state",     "value":$state, "inline":true}
+              ]')
+
+          elif [ "$EVENT" = "pull_request" ]; then
+            ACTION="${{ github.event.action }}"
+            PR_NUM="${{ github.event.pull_request.number }}"
+            PR_TITLE="${{ github.event.pull_request.title }}"
+            PR_URL="${{ github.event.pull_request.html_url }}"
+            PR_USER="${{ github.event.pull_request.user.login }}"
+            PR_STATE="${{ github.event.pull_request.state }}"
+            PR_HEAD="${{ github.event.pull_request.head.ref }}"
+            PR_BASE="${{ github.event.pull_request.base.ref }}"
+            TITLE="pull request #$PR_NUM $ACTION"
+            DESC="[$PR_TITLE]($PR_URL)"
+            URL="$PR_URL"
+            COLOR=10181046
+            FIELDS=$(jq -n \
+              --arg user  "$PR_USER" \
+              --arg state "$PR_STATE" \
+              --arg head  "$PR_HEAD" \
+              --arg base  "$PR_BASE" \
+              '[
+                {"name":"opened by", "value":$user,  "inline":true},
+                {"name":"state",     "value":$state, "inline":true},
+                {"name":"from",      "value":$head,  "inline":true},
+                {"name":"into",      "value":$base,  "inline":true}
+              ]')
+          fi
+
+          jq -n \
+            --arg title      "$TITLE" \
+            --arg desc       "$DESC" \
+            --arg url        "$URL" \
+            --argjson color  "$COLOR" \
+            --argjson fields "$FIELDS" \
+            --arg repo       "$REPO" \
+            --arg repo_url   "$REPO_URL" \
+            --arg timestamp  "$TIMESTAMP" \
+            '{
+              embeds: [{
+                title:       $title,
+                description: $desc,
+                url:         $url,
+                color:       $color,
+                fields:      $fields,
+                footer: {
+                  text:     $repo,
+                  icon_url: "https://github.com/favicon.ico"
+                },
+                timestamp: $timestamp
+              }]
+            }' | curl -s \
+                  -H "Content-Type: application/json" \
+                  -X POST \
+                  -d @- \
+                  "${{ secrets.DISCORD_WEBHOOK }}"
