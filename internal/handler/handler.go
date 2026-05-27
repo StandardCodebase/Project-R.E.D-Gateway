@@ -143,7 +143,7 @@ func (n *Node) DownloadGuide(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Header().Set("Content-Type", "text/markdown; charset=utf-8")
-	w.Header().Set("Content-Disposition", "attachment; filename="+filepath.Base(path))
+	w.Header().Set("Content-Disposition", `attachment; filename="`+filepath.Base(path)+`"`)
 	w.Header().Set("X-Content-Type-Options", "nosniff")
 	w.Write(raw)
 }
