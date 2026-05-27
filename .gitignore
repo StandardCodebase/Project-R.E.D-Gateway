@@ -6,6 +6,8 @@ data/clearnet/remote/*
 data/restricted/*
 data/
 
+install.sh
+
 !data/clearnet/.gitkeep
 !data/restricted/.gitkeep
 

@@ -19,3 +19,13 @@ type PageData struct {
 	ContentPath string
 	HTMLContent template.HTML
 }
+
+type GuideEntry struct {
+	Path  string
+	Title string
+}
+
+type ImportRequest struct {
+	URL      string `json:"url"`
+	Filename string `json:"filename"`
+}

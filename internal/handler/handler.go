@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"fmt"
 	"html/template"
 	"io"
 	"log"
@@ -22,16 +23,6 @@ type Node struct {
 	Cfg           config.Config
 	Template      *template.Template
 	IndexTemplate *template.Template
-}
-
-type GuideEntry struct {
-	Path  string
-	Title string
-}
-
-type ImportRequest struct {
-	URL      string `json:"url"`
-	Filename string `json:"filename"`
 }
 
 func (n *Node) Health(w http.ResponseWriter, r *http.Request) {
@@ -57,14 +48,14 @@ func (n *Node) Index(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// --- NEW CACHING LOGIC ---
+// --- CACHING LOGIC ---
 var (
-	manifestCache []GuideEntry
+	manifestCache []config.GuideEntry
 	cacheMutex    sync.RWMutex
 	lastCacheTime time.Time
 )
 
-func getCachedGuides(dataDir string) []GuideEntry {
+func getCachedGuides(dataDir string) []config.GuideEntry {
 	cacheMutex.RLock()
 	// Serve from cache if it's less than 5 minutes old
 	if time.Since(lastCacheTime) < 5*time.Minute && manifestCache != nil {
@@ -92,8 +83,8 @@ func getCachedGuides(dataDir string) []GuideEntry {
 
 // -------------------------
 
-func walkGuides(dataDir string) []GuideEntry {
-	var entries []GuideEntry
+func walkGuides(dataDir string) []config.GuideEntry {
+	var entries []config.GuideEntry
 	filepath.Walk(dataDir, func(path string, info os.FileInfo, err error) error {
 		if err != nil || info.IsDir() || !strings.HasSuffix(path, ".md") {
 			return nil
@@ -108,7 +99,7 @@ func walkGuides(dataDir string) []GuideEntry {
 				title = result.Meta.Title
 			}
 		}
-		entries = append(entries, GuideEntry{Path: rel, Title: title})
+		entries = append(entries, config.GuideEntry{Path: rel, Title: title})
 		return nil
 	})
 	return entries
@@ -247,13 +238,61 @@ func (n *Node) serveResource(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, resolved)
 }
 
+// --- NEW REMOTE FETCHING HELPER ---
+
+func (n *Node) downloadAndSaveRemoteGuide(remoteURL string, filename string) error {
+	// 1. Fetch the remote file
+	req, err := http.NewRequest(http.MethodGet, remoteURL, nil)
+	if err != nil {
+		return err
+	}
+	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
+
+	client := &http.Client{Timeout: 15 * time.Second}
+	resp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("remote server returned status: %d", resp.StatusCode)
+	}
+	defer resp.Body.Close()
+
+	// 2. Ensure directory exists
+	remoteDir := filepath.Join(n.Cfg.DataDir, "remote")
+	if err := os.MkdirAll(remoteDir, 0755); err != nil {
+		return err
+	}
+
+	// 3. Write to disk
+	targetPath := filepath.Join(remoteDir, filename)
+	outFile, err := os.Create(targetPath)
+	if err != nil {
+		return err
+	}
+	defer outFile.Close()
+
+	if _, err = io.Copy(outFile, resp.Body); err != nil {
+		return err
+	}
+
+	// 4. Invalidate the memory cache
+	cacheMutex.Lock()
+	manifestCache = nil
+	cacheMutex.Unlock()
+
+	return nil
+}
+
+// ----------------------------------
+
 func (n *Node) ImportRemoteGuide(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
 
-	var req ImportRequest
+	var req config.ImportRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "Invalid JSON payload", http.StatusBadRequest)
 		return
@@ -271,34 +310,7 @@ func (n *Node) ImportRemoteGuide(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 2. Fetch the remote file (with bot-detection bypass)
-	fetchReq, err := http.NewRequest(http.MethodGet, req.URL, nil)
-	if err != nil {
-		http.Error(w, "Failed to build request", http.StatusInternalServerError)
-		return
-	}
-
-	// Spoof a standard browser to bypass WAFs and bot blockers
-	fetchReq.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
-
-	// Use a custom client with a timeout (best practice to prevent server hangs)
-	client := &http.Client{Timeout: 15 * time.Second}
-	resp, err := client.Do(fetchReq)
-
-	if err != nil || resp.StatusCode != http.StatusOK {
-		http.Error(w, "Failed to fetch remote guide: remote server blocked the request", http.StatusBadGateway)
-		return
-	}
-	defer resp.Body.Close()
-
-	// 3. Route to the dedicated 'remote' directory
-	remoteDir := filepath.Join(n.Cfg.DataDir, "remote")
-	if err := os.MkdirAll(remoteDir, 0755); err != nil {
-		http.Error(w, "Failed to create remote directory", http.StatusInternalServerError)
-		return
-	}
-
-	// 4. Sanitize the filename to prevent directory traversal
+	// 2. Sanitize the filename to prevent directory traversal
 	safeName := filepath.Clean(req.Filename)
 	if safeName == "." || safeName == "" || strings.Contains(safeName, "/") || strings.Contains(safeName, "\\") {
 		safeName = "community-sync-" + time.Now().Format("20060102150405") + ".md"
@@ -307,76 +319,23 @@ func (n *Node) ImportRemoteGuide(w http.ResponseWriter, r *http.Request) {
 		safeName += ".md"
 	}
 
-	targetPath := filepath.Join(remoteDir, safeName)
-	outFile, err := os.Create(targetPath)
-	if err != nil {
-		http.Error(w, "Failed to write file to disk", http.StatusInternalServerError)
+	// 3. Download, save, and update cache via helper
+	if err := n.downloadAndSaveRemoteGuide(req.URL, safeName); err != nil {
+		http.Error(w, "Failed to sync remote guide: "+err.Error(), http.StatusBadGateway)
 		return
 	}
-	defer outFile.Close()
-
-	_, err = io.Copy(outFile, resp.Body)
-	if err != nil {
-		http.Error(w, "Stream copy failed", http.StatusInternalServerError)
-		return
-	}
-
-	// 5. Invalidate the memory cache so the UI updates instantly
-	cacheMutex.Lock()
-	manifestCache = nil
-	cacheMutex.Unlock()
 
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("Successfully synced to remote/" + safeName))
 }
 
-// Add this at the bottom of internal/handler/handler.go
-
 func (n *Node) SyncGuideOnStartup(remoteURL string, filename string) {
 	log.Printf("Startup Sync: Fetching %s...", filename)
 
-	// 1. Build the request with bot-bypass headers
-	req, err := http.NewRequest(http.MethodGet, remoteURL, nil)
-	if err != nil {
+	if err := n.downloadAndSaveRemoteGuide(remoteURL, filename); err != nil {
 		log.Printf("Startup Sync Error: %v", err)
 		return
 	}
-	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
-
-	// 2. Execute the request
-	client := &http.Client{Timeout: 15 * time.Second}
-	resp, err := client.Do(req)
-	if err != nil || resp.StatusCode != http.StatusOK {
-		log.Printf("Startup Sync Error: Could not reach remote server (Status: %v)", resp.StatusCode)
-		return
-	}
-	defer resp.Body.Close()
-
-	// 3. Ensure the remote directory exists
-	remoteDir := filepath.Join(n.Cfg.DataDir, "remote")
-	if err := os.MkdirAll(remoteDir, 0755); err != nil {
-		log.Printf("Startup Sync Error: Could not create directory: %v", err)
-		return
-	}
-
-	// 4. Save the file to disk
-	targetPath := filepath.Join(remoteDir, filename)
-	outFile, err := os.Create(targetPath)
-	if err != nil {
-		log.Printf("Startup Sync Error: Could not write to disk: %v", err)
-		return
-	}
-	defer outFile.Close()
-
-	if _, err = io.Copy(outFile, resp.Body); err != nil {
-		log.Printf("Startup Sync Error: Stream copy failed: %v", err)
-		return
-	}
-
-	// 5. Invalidate the memory cache so the UI sees it immediately
-	cacheMutex.Lock()
-	manifestCache = nil
-	cacheMutex.Unlock()
 
 	log.Printf("Startup Sync: Successfully downloaded %s", filename)
 }

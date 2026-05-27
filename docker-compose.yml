@@ -1,95 +1,40 @@
 networks:
-  # Used ONLY by Caddy and the Light Node
-  clearnet-tier:
-    driver: bridge
-
-  # Used ONLY by Tor to reach the outside world (no internal servers here)
   tor-egress:
     driver: bridge
-
-  # The true airgap (No internet access, only connects Tor to the Dark Node)
   onion-tier:
     internal: true
 
 services:
-  # ==========================================
-  # NODE 1: THE CLEARNET GATEWAY (LIGHT)
-  # ==========================================
-  red_light_node:
-    build: .
-    container_name: red_light_node
-    restart: unless-stopped
-    networks:
-      - clearnet-tier
-    environment:
-      - RED_NODE_NAME=Clearnet-Gateway-01
-      - RED_PORT=8080
-      - RED_DATA_DIR=/app/data/clearnet
-    volumes:
-      - ./data/clearnet:/app/data/clearnet:rw
-    # ==========================================
-    # CADDY PROXY
-    # ==========================================
-  caddy_proxy:
-    image: caddy:latest
-    container_name: caddy_proxy
-    restart: unless-stopped
-    ports:
-      - "80:80"
-      - "443:443"
-    networks:
-      - clearnet-tier
-    volumes:
-      - ./caddy_routing:/etc/caddy
-      - caddy_data:/data
-      - caddy_config:/config
-    depends_on:
-      - red_light_node
-    command: >
-      /bin/sh -c '
-      if [ ! -f /etc/caddy/Caddyfile ]; then
-        echo "Generating default Caddyfile..."
-        echo ":80 {" > /etc/caddy/Caddyfile
-        echo "    reverse_proxy red_light_node:8080" >> /etc/caddy/Caddyfile
-        echo "}" >> /etc/caddy/Caddyfile
-      fi;
-      caddy run --config /etc/caddy/Caddyfile --adapter caddyfile'
-
-  # ==========================================
-  # NODE 2: THE ONION VAULT (DARK)
-  # ==========================================
   red_dark_node:
     build: .
     container_name: red_dark_node
     restart: unless-stopped
     networks:
-      # strictly internal, no outside access
       - onion-tier
     environment:
       - RED_NODE_NAME=Onion-Vault-Secure
       - RED_PORT=9090
       - RED_DATA_DIR=/app/data/restricted
     volumes:
-      - ./data:/app/data:ro
+      - ./data/restricted:/app/data/restricted:ro
 
   tor_sidecar:
     image: goldy/tor-hidden-service:latest
     container_name: tor_sidecar
     restart: unless-stopped
     networks:
-      # Can reach out to the global Tor network
       - tor-egress
-      # Can route traffic inward to the Dark Node
       - onion-tier
     links:
       - red_dark_node
     environment:
+      # This dictates the folder name inside /var/lib/tor
       VAULT_TOR_SERVICE_HOSTS: "80:red_dark_node:9090"
     volumes:
-      - ./tor_keys:/var/lib/tor
+      # Switched to a Named Volume to fix the permission crash loop
+      - tor_data:/var/lib/tor
     depends_on:
       - red_dark_node
 
 volumes:
-  caddy_data:
-  caddy_config:
+  tor_data:
