@@ -1,0 +1,89 @@
+<div class="article">
+    <h1>Node Operator Dashboard</h1>
+    <p>
+        Manage your sovereign knowledge base. All incoming payloads are
+        cryptographically verified before writing to disk.
+    </p>
+
+    <hr />
+
+    <h3>1. Clearnet Peer Sync (Secure)</h3>
+    <p>
+        Pull a guide from a trusted R.E.D. node. Payload will be dropped if the
+        SHA-256 integrity hash is tampered with in transit.
+    </p>
+    <form action="/sync-peer" method="POST" class="admin-form">
+        <label>Remote Peer URL:</label>
+        <input
+            type="text"
+            name="url"
+            placeholder="http://peer-node.com/guides/solar/01-wiring"
+            required
+        />
+
+        <label>Save to Local Path (e.g., guides/solar/01-wiring):</label>
+        <input
+            type="text"
+            name="path"
+            placeholder="guides/solar/01-wiring"
+            required
+        />
+
+        <button type="submit">Verify & Sync Payload</button>
+    </form>
+
+    <br /><br />
+
+    <h3>2. Raw Markdown Import (Browser Spoofing)</h3>
+    <p>
+        Instantly mirror raw markdown from hostile centralized hosts (GitHub,
+        AWS, Cloudflare).
+    </p>
+    <form action="/import" method="POST" class="admin-form">
+        <label>Raw Markdown URL:</label>
+        <input
+            type="text"
+            name="url"
+            placeholder="https://raw.githubusercontent.com/..."
+            required
+        />
+
+        <label>Save to Local Path:</label>
+        <input
+            type="text"
+            name="path"
+            placeholder="archived/original-manifesto"
+            required
+        />
+
+        <button type="submit" style="background-color: #555">
+            Bypass & Mirror
+        </button>
+    </form>
+</div>
+
+<style>
+    .admin-form {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        max-width: 500px;
+        margin-top: 10px;
+    }
+    .admin-form input {
+        padding: 8px;
+        border: 1px solid #ccc;
+        font-family: monospace;
+    }
+    .admin-form button {
+        padding: 10px;
+        background-color: #d32f2f;
+        color: white;
+        border: none;
+        cursor: pointer;
+        font-weight: bold;
+    }
+    .admin-form button:hover {
+        opacity: 0.8;
+    }
+</style>

@@ -11,6 +11,9 @@ type Config struct {
 	DataDir    string `json:"data_dir"`
 	Addr       string `json:"addr"`
 	SiteName   string `json:"site_name"`
+	// --- RESTORED: Node Keys --- DO NOT DELETE
+	NodePublicKey string   `json:"node_public_key"`
+	TrustedPeers  []string `json:"trusted_peers"`
 }
 
 func Load(path string) (*Config, error) {
